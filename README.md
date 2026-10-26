@@ -1,96 +1,96 @@
 # xlsx-validator
 
-`xlsx-validator` adalah perkakas *command-line interface* (CLI) sumber terbuka (*open-source*) berbasis Go murni (*native*) untuk memvalidasi isi buku kerja Excel (`.xlsx`) terhadap konfigurasi aturan berbasis JSON tanpa memodifikasi file aslinya.
+`xlsx-validator` is an open-source command-line interface (CLI) tool written in Go that validates Excel workbook (`.xlsx`) contents against JSON-based rule configurations without modifying the original file.
 
-Perkakas ini bekerja sepenuhnya secara lokal dan luring (*offline*) setelah diinstal, tanpa membutuhkan Microsoft Excel, LibreOffice, runtime Node.js, atau koneksi jaringan saat proses validasi.
-
----
-
-## Daftar Isi
-
-- [Instalasi dan Build](#instalasi-dan-build)
-- [Penggunaan CLI](#penggunaan-cli)
-- [Kode Keluar (Exit Codes)](#kode-keluar-exit-codes)
-- [Format Konfigurasi JSON](#format-konfigurasi-json)
-  - [Nilai Default](#nilai-default)
-  - [Tipe Data Kolom](#tipe-data-kolom)
-  - [Daftar Aturan yang Didukung](#daftar-aturan-yang-didukung)
-  - [Format Layout Tanggal](#format-layout-tanggal)
-- [Format Output](#format-output)
-  - [Teks (Default)](#1-format-teks-default)
-  - [JSON](#2-format-json)
-  - [CSV](#3-format-csv)
-- [Kode Error Stabil](#kode-error-stabil)
-- [Contoh Penggunaan dalam Shell Script](#contoh-penggunaan-dalam-shell-script)
-- [Batasan MVP & Rencana Masa Depan](#batasan-mvp--rencana-masa-depan)
+Once installed, the tool runs entirely locally and offline, without requiring Microsoft Excel, LibreOffice, a Node.js runtime, or a network connection during validation.
 
 ---
 
-## Instalasi dan Build
+## Table of Contents
 
-### Prasyarat
+- [Installation and Build](#installation-and-build)
+- [CLI Usage](#cli-usage)
+- [Exit Codes](#exit-codes)
+- [JSON Configuration Format](#json-configuration-format)
+  - [Default Values](#default-values)
+  - [Column Data Types](#column-data-types)
+  - [Supported Rules](#supported-rules)
+- [Date Layout Format](#date-layout-format)
+- [Output Formats](#output-formats)
+  - [Text (Default)](#1-text-format-default)
+  - [JSON](#2-json-format)
+  - [CSV](#3-csv-format)
+- [Stable Error Codes](#stable-error-codes)
+- [Shell Script Usage Example](#shell-script-usage-example)
+- [MVP Scope and Future Plans](#mvp-scope-and-future-plans)
 
-- Go versi 1.23 atau lebih baru.
+---
 
-### Langkah Build
+## Installation and Build
 
-Klon repositori dan bangun binary lokal menggunakan perintah:
+### Prerequisites
+
+- Go version 1.23 or later.
+
+### Build Steps
+
+Clone the repository and build the local binary using:
 
 ```sh
 go build ./cmd/xlsx-validator
 ```
 
-Perintah di atas akan menghasilkan file *executable* bernama `xlsx-validator` (atau `xlsx-validator.exe` pada Windows) di direktori aktif.
+This command creates an executable named `xlsx-validator` (or `xlsx-validator.exe` on Windows) in the current directory.
 
 ---
 
-## Penggunaan CLI
+## CLI Usage
 
-Bentuk perintah CLI menempatkan opsi flag sebelum argumen posisi path workbook:
+Place flag options before the positional workbook path argument:
 
 ```sh
-# Menampilkan laporan teks ke terminal (stdout)
+# Print a text report to the terminal (stdout)
 ./xlsx-validator --config examples/employee-rules.json employees.xlsx
 
-# Menampilkan laporan format JSON ke terminal
+# Print a JSON report to the terminal
 ./xlsx-validator --config examples/employee-rules.json --format json employees.xlsx
 
-# Menyimpan laporan JSON ke file secara aman (atomic write)
+# Safely save a JSON report to a file (atomic write)
 ./xlsx-validator --config examples/employee-rules.json --format json --output result.json employees.xlsx
 
-# Menyimpan laporan CSV ke file
+# Save a CSV report to a file
 ./xlsx-validator --config examples/employee-rules.json --format csv --output result.csv employees.xlsx
 
-# Bantuan petunjuk perintah
+# Show command help
 ./xlsx-validator --help
 ```
 
-### Opsi Flag
+### Flag Options
 
-| Flag | Deskripsi | Default | Wajib? |
-|------|-----------|---------|--------|
-| `--config <path>` | Path ke file konfigurasi aturan JSON | - | Ya |
-| `--format <tipe>` | Format laporan output: `text`, `json`, `csv` | `text` | Tidak |
-| `--output <path>` | Path file tujuan untuk menulis laporan (atomic write) | stdout | Tidak |
-| `--help`, `-h` | Menampilkan panduan dan keluar dengan kode 0 | - | Tidak |
+| Flag | Description | Default | Required? |
+|------|-------------|---------|-----------|
+| `--config <path>` | Path to the JSON rule configuration file | - | Yes |
+| `--format <type>` | Output report format: `text`, `json`, or `csv` | `text` | No |
+| `--output <path>` | Destination file path for the report (atomic write) | stdout | No |
+| `--help`, `-h` | Show help and exit with code 0 | - | No |
 
-> **Catatan Keamanan Penulisan Output:** Jika opsi `--output` mengarah ke file workbook input atau file konfigurasi yang sedang dibaca (termasuk melalui symlink atau hard link), eksekusi akan ditolak untuk mencegah kerusakan data asli.
-
----
-
-## Kode Keluar (Exit Codes)
-
-| Kode | Keterangan |
-|------|------------|
-| `0` | Validasi selesai dan **tidak ditemukan pelanggaran** (sukses). |
-| `1` | Validasi selesai dengan **satu atau lebih pelanggaran** (termasuk pelanggaran struktur sheet/header). |
-| `2` | Terjadi kesalahan operasional: argumen salah, konfigurasi tidak valid, workbook tidak dapat dibuka/bukan `.xlsx`, atau gagal menulis output. |
+> **Output Write Safety:** If `--output` points to the input workbook or the configuration file being read, including through a symbolic link or hard link, execution is rejected to prevent damage to the original data.
 
 ---
 
-## Format Konfigurasi JSON
+## Exit Codes
 
-Contoh file konfigurasi `examples/employee-rules.json`:
+| Code | Description |
+|------|-------------|
+| `0` | Validation completed with **no violations found** (success). |
+| `1` | Validation completed with **one or more violations**, including sheet or header structure violations. |
+| `2` | An operational error occurred: invalid arguments, invalid configuration, an unreadable or non-`.xlsx` workbook, or an output write failure. |
+
+---
+
+## JSON Configuration Format
+
+Example configuration file, `examples/employee-rules.json`:
 
 ```json
 {
@@ -106,7 +106,7 @@ Contoh file konfigurasi `examples/employee-rules.json`:
       "maxLength": 20,
       "pattern": "^[0-9]+$"
     },
-    "FULL_NAME": {
+    "EMPLOYEE_NAME": {
       "type": "string",
       "required": true,
       "minLength": 1,
@@ -126,7 +126,7 @@ Contoh file konfigurasi `examples/employee-rules.json`:
       "type": "number",
       "min": 0
     },
-    "EMP_STATUS": {
+    "STATUS": {
       "type": "string",
       "allowedValues": ["PERMANENT", "CONTRACT", "PROBATION"]
     }
@@ -134,56 +134,56 @@ Contoh file konfigurasi `examples/employee-rules.json`:
 }
 ```
 
-### Nilai Default
+### Default Values
 
-- `headerRow`: default `1` (baris ke-1 Excel, berbasis 1-based, harus > 0).
-- `skipEmptyRows`: default `true`. Nilai eksplisit `false` dihormati. Baris hanya dilewati jika seluruh sel dalam baris tersebut kosong (termasuk kolom yang tidak dikonfigurasi). Sel formula atau error Excel membuat baris dianggap tidak kosong.
-- `trimSpace`: default `true`. Nilai eksplisit `false` dihormati. Pemangkasan spasi mempengaruhi pencocokan aturan; nilai asli pada laporan tetap dipertahankan.
-- `type`: default `"string"` jika tidak didefinisikan.
+- `headerRow`: Defaults to `1` (the first Excel row; uses one-based indexing and must be greater than 0).
+- `skipEmptyRows`: Defaults to `true`. An explicit `false` is respected. A row is skipped only if every cell in that row is empty, including cells in unconfigured columns. Formula cells and Excel error cells cause the row to be considered nonempty.
+- `trimSpace`: Defaults to `true`. An explicit `false` is respected. Whitespace trimming affects rule matching; original values are preserved in the report.
+- `type`: Defaults to `"string"` when omitted.
 
-### Tipe Data Kolom
+### Column Data Types
 
-- `string`: Teks umum (panjang dihitung berdasarkan *Unicode code points*, bukan bytes).
-- `integer`: Bilangan bulat matematis. Nilai raw diverifikasi presisi tanpa konversi floating-point yang tidak akurat.
-- `number`: Bilangan real berhingga (*finite*). Menolak NaN dan tak hingga (*infinity*).
-- `date`: Tanggal kalender. Mendukung format teks dan nomor seri Excel.
-- `boolean`: Nilai boolean *native* Excel atau string `"true"` / `"false"` (*case-insensitive*). Nilai `0`, `1`, `Y`, atau `N` bukan boolean.
+- `string`: General text. Length is measured in Unicode code points, rather than bytes.
+- `integer`: A mathematical integer. Raw values are checked precisely without inaccurate floating-point conversion.
+- `number`: A finite real number. NaN and infinity are rejected.
+- `date`: A calendar date. Supports text formats and Excel serial numbers.
+- `boolean`: A native Excel boolean value or the strings `"true"` / `"false"` (case-insensitive). Values such as `0`, `1`, `Y`, and `N` are not treated as booleans.
 
-### Daftar Aturan yang Didukung
+### Supported Rules
 
-| Aturan | Tipe Terkait | Deskripsi |
-|--------|--------------|-----------|
-| `required` | Semua | Jika `true`, sel tidak boleh kosong. Sel kosong wajib menghasilkan pelanggaran `REQUIRED`. Sel kosong opsional melewati validasi lanjutan. |
-| `unique` | Semua | Menilai keunikan nilai teks normalisasi secara *case-sensitive*. Seluruh anggota kelompok duplikat akan ditandai dengan kode `DUPLICATE`. Sel kosong tidak ikut serta dalam keunikan. |
-| `allowedValues` | Semua | Daftar nilai teks yang diizinkan (*case-sensitive*). Menghasilkan `NOT_ALLOWED` jika tidak cocok. |
-| `minLength` | `string` | Jumlah minimum karakter (*Unicode code points*, >= 0). Menghasilkan `MIN_LENGTH`. |
-| `maxLength` | `string` | Jumlah maksimum karakter (*Unicode code points*, >= 0). Menghasilkan `MAX_LENGTH`. |
-| `pattern` | `string` | Regular expression Go (`regexp`). Menghasilkan `PATTERN_MISMATCH`. Gunakan `^` dan `$` untuk pencocokan penuh. |
-| `format` | `string` | Format khusus. MVP mendukung `"email"` (sintaks email murni tanpa *display name*). Menghasilkan `INVALID_FORMAT`. |
-| `min` | `integer`, `number` | Batas nilai minimum numerik berhingga. Menghasilkan `MIN_VALUE`. Mendukung `min: 0`. |
-| `max` | `integer`, `number` | Batas nilai maksimum numerik berhingga. Menghasilkan `MAX_VALUE`. |
-| `dateLayouts` | `date` | Daftar format layout parser Go (`time.Parse`). Minimal satu format jika ada input tanggal teks. |
-| `allowExcelSerial` | `date` | Jika `true`, menerima nomor seri tanggal Excel (sistem 1900 atau 1904). Hari kabisat fiktif 1900-02-29 ditolak eksplisit. |
+| Rule | Applicable Types | Description |
+|------|------------------|-------------|
+| `required` | All | If `true`, the cell must not be empty. An empty required cell produces a `REQUIRED` violation. Empty optional cells skip further validation. |
+| `unique` | All | Checks the uniqueness of normalized text values using case-sensitive comparison. Every member of a duplicate group is flagged with `DUPLICATE`. Empty cells are excluded from uniqueness checks. |
+| `allowedValues` | All | A list of permitted text values (case-sensitive). Produces `NOT_ALLOWED` if no match is found. |
+| `minLength` | `string` | Minimum character count (Unicode code points, >= 0). Produces `MIN_LENGTH`. |
+| `maxLength` | `string` | Maximum character count (Unicode code points, >= 0). Produces `MAX_LENGTH`. |
+| `pattern` | `string` | A Go regular expression (`regexp`). Produces `PATTERN_MISMATCH`. Use `^` and `$` to match the entire value. |
+| `format` | `string` | A special format. The MVP supports `"email"` (a plain email address without a display name). Produces `INVALID_FORMAT`. |
+| `min` | `integer`, `number` | A finite minimum numeric value. Produces `MIN_VALUE`. Supports `min: 0`. |
+| `max` | `integer`, `number` | A finite maximum numeric value. Produces `MAX_VALUE`. |
+| `dateLayouts` | `date` | A list of Go parser layouts (`time.Parse`). At least one layout is required for text date input. |
+| `allowExcelSerial` | `date` | If `true`, accepts Excel date serial numbers using the 1900 or 1904 date system. The fictitious leap day 1900-02-29 is explicitly rejected. |
 
-> **Validasi Konfigurasi:** Konfigurasi akan menolak *unknown fields*, duplikasi key JSON, nama kolom kosong, regex tidak valid, batas nilai tidak logis (`min > max`, `minLength > maxLength`, panjang negatif), serta kombinasi aturan yang tidak kompatibel dengan tipenya.
-
----
-
-## Format Layout Tanggal
-
-Layout tanggal pada `dateLayouts` menggunakan konvensi parser waktu Go (`time.Parse`), bukan token `YYYY-MM-DD`. Tanggal acuan referensi Go adalah `2006-01-02 15:04:05`:
-
-- `"2006-01-02"` untuk format Tahun-Bulan-Tanggal (contoh: `2023-01-15`)
-- `"02/01/2006"` untuk format Tanggal/Bulan/Tahun (contoh: `15/01/2023`)
-- `"01/02/2006"` untuk format Bulan/Tanggal/Tahun (contoh: `01/15/2023`)
+> **Configuration Validation:** The configuration rejects unknown fields, duplicate JSON keys, empty column names, invalid regular expressions, inconsistent bounds (`min > max`, `minLength > maxLength`, or negative lengths), and rule combinations incompatible with the specified type.
 
 ---
 
-## Format Output
+## Date Layout Format
 
-### 1. Format Teks (Default)
+Date layouts in `dateLayouts` follow Go's time parser conventions (`time.Parse`), rather than tokens such as `YYYY-MM-DD`. Go uses `2006-01-02 15:04:05` as its reference date and time:
 
-Output terminal yang mudah dibaca:
+- `"2006-01-02"` for Year-Month-Day (example: `2023-01-15`)
+- `"02/01/2006"` for Day/Month/Year (example: `15/01/2023`)
+- `"01/02/2006"` for Month/Day/Year (example: `01/15/2023`)
+
+---
+
+## Output Formats
+
+### 1. Text Format (Default)
+
+Human-readable terminal output:
 
 ```text
 File:  testdata/invalid_employees.xlsx
@@ -208,9 +208,9 @@ Violations:
     8. A5         PATTERN_MISMATCH     value "EMP_ABC" does not match pattern "^[0-9]+$" [EMP_NO] (value: "EMP_ABC")
 ```
 
-### 2. Format JSON
+### 2. JSON Format
 
-Struktur skema JSON terstandarisasi:
+Standardized JSON schema structure:
 
 ```json
 {
@@ -238,11 +238,11 @@ Struktur skema JSON terstandarisasi:
 }
 ```
 
-Jika tidak ada pelanggaran, `errors` selalu bernilai array kosong `[]`.
+When there are no violations, `errors` is always an empty array, `[]`.
 
-### 3. Format CSV
+### 3. CSV Format
 
-File CSV berisi header dan satu record per pelanggaran:
+The CSV file contains a header and one record per violation:
 
 ```csv
 sheet,row,cell,column,value,code,message
@@ -256,37 +256,37 @@ Employees,3,F3,EMP_STATUS,INTERN,NOT_ALLOWED,"value ""INTERN"" is not in allowed
 Employees,5,A5,EMP_NO,EMP_ABC,PATTERN_MISMATCH,"value ""EMP_ABC"" does not match pattern ""^[0-9]+$"""
 ```
 
-- Jika validasi berhasil tanpa error, CSV hanya berisi baris header tanpa baris data.
-- **Proteksi Injeksi Formula CSV:** Nilai teks yang diawali karakter `=`, `+`, `-`, `@`, tab (`\t`), atau carriage return (`\r`) otomatis dinetralisir dengan awalan tanda kutip tunggal `'` pada file CSV. Nilai pada JSON tetap utuh.
+- If validation succeeds without errors, the CSV contains only the header row and no data rows.
+- **CSV Formula Injection Protection:** Text values beginning with `=`, `+`, `-`, `@`, a tab (`\t`), or a carriage return (`\r`) are automatically neutralized by prefixing them with a single quote (`'`) in the CSV file. Values in JSON remain unchanged.
 
 ---
 
-## Kode Error Stabil
+## Stable Error Codes
 
-| Kode | Kategori | Penjelasan |
-|------|----------|------------|
-| `SHEET_NOT_FOUND` | Struktur | Sheet yang dikonfigurasi tidak ditemukan di dalam workbook. |
-| `MISSING_HEADER` | Struktur | Header kolom yang dikonfigurasi tidak ditemukan pada `headerRow`. |
-| `DUPLICATE_HEADER` | Struktur | Terdapat dua atau lebih header non-kosong dengan nama yang sama. |
-| `FORMULA_HEADER` | Struktur | Terdapat formula pada baris header. |
-| `REQUIRED` | Data | Sel wajib diisi namun bernilai kosong/spasi. |
-| `DUPLICATE` | Data | Nilai terdeteksi duplikat pada kolom beraturan `unique: true`. |
-| `INVALID_TYPE` | Data | Tipe sel tidak cocok dengan tipe yang didefinisikan (misal: bukan integer, bukan boolean, atau tanggal tidak sah). |
-| `INVALID_FORMAT` | Data | Format khusus string tidak valid (misal: format email tidak sah). |
-| `MIN_LENGTH` | Data | Panjang string kurang dari `minLength`. |
-| `MAX_LENGTH` | Data | Panjang string melebihi `maxLength`. |
-| `MIN_VALUE` | Data | Nilai angka kurang dari batas `min`. |
-| `MAX_VALUE` | Data | Nilai angka melebihi batas `max`. |
-| `NOT_ALLOWED` | Data | Nilai tidak terdaftar di dalam `allowedValues`. |
-| `PATTERN_MISMATCH` | Data | Nilai string tidak cocok dengan pola `pattern` regex. |
-| `FORMULA_NOT_ALLOWED` | Data | Ditemukan formula pada sel data terkonfigurasi. |
-| `EXCEL_ERROR` | Data | Sel berisi nilai error bawaan Excel (misal: `#VALUE!`, `#N/A`, `#REF!`). |
+| Code | Category | Description |
+|------|----------|-------------|
+| `SHEET_NOT_FOUND` | Structure | The configured sheet was not found in the workbook. |
+| `MISSING_HEADER` | Structure | A configured column header was not found in `headerRow`. |
+| `DUPLICATE_HEADER` | Structure | Two or more nonempty headers have the same name. |
+| `FORMULA_HEADER` | Structure | A formula was found in the header row. |
+| `REQUIRED` | Data | A required cell is empty or contains only whitespace. |
+| `DUPLICATE` | Data | A duplicate value was detected in a column configured with `unique: true`. |
+| `INVALID_TYPE` | Data | The cell value does not match the specified type, such as a noninteger, a nonboolean, or an invalid date. |
+| `INVALID_FORMAT` | Data | The string does not match the required special format, such as a valid email address. |
+| `MIN_LENGTH` | Data | The string length is less than `minLength`. |
+| `MAX_LENGTH` | Data | The string length exceeds `maxLength`. |
+| `MIN_VALUE` | Data | The numeric value is less than `min`. |
+| `MAX_VALUE` | Data | The numeric value exceeds `max`. |
+| `NOT_ALLOWED` | Data | The value is not listed in `allowedValues`. |
+| `PATTERN_MISMATCH` | Data | The string does not match the `pattern` regular expression. |
+| `FORMULA_NOT_ALLOWED` | Data | A formula was found in a configured data cell. |
+| `EXCEL_ERROR` | Data | The cell contains a built-in Excel error value, such as `#VALUE!`, `#N/A`, or `#REF!`. |
 
 ---
 
-## Contoh Penggunaan dalam Shell Script
+## Shell Script Usage Example
 
-Anda dapat mengintegrasikan `xlsx-validator` dalam pipeline otomatis atau skrip bash menggunakan kode keluarnya:
+You can integrate `xlsx-validator` into an automated pipeline or Bash script using its exit codes:
 
 ```sh
 #!/bin/bash
@@ -296,40 +296,41 @@ set -e
 EXIT_CODE=$?
 
 if [ $EXIT_CODE -eq 0 ]; then
-    echo "Validasi berhasil: Tidak ada kesalahan."
-    # Lanjutkan proses impor database
+    echo "Validation succeeded: No errors found."
+    # Continue with the database import
 elif [ $EXIT_CODE -eq 1 ]; then
-    echo "Validasi gagal: Terdapat data tidak valid. Silakan periksa result.json."
+    echo "Validation failed: Invalid data found. Please check result.json."
     exit 1
 else
-    echo "Kesalahan sistem/konfigurasi: Exit code $EXIT_CODE"
+    echo "System/configuration error: Exit code $EXIT_CODE"
     exit 2
 fi
 ```
 
 ---
 
-## Batasan MVP & Rencana Masa Depan
+## MVP Scope and Future Plans
 
-### Fitur yang Diterapkan pada MVP
+### Features Implemented in the MVP
 
-- Validasi 1 sheet per pemanggilan CLI.
-- Deteksi struktur header lengkap: verifikasi keberadaan sheet, header hilang, duplikat header, dan formula header.
-- Pemeriksaan tipe data: `string`, `integer`, `number`, `date`, `boolean`.
-- Validasi sel formula dan sel error Excel pada baris data.
-- Penanganan presisi numerik dan awalan nol pada string (misal: kode `00123`).
-- Tiga format laporan: Terminal Teks, JSON, dan CSV (dengan proteksi formula injection).
-- Penulisan laporan file atomik (*safe temporary rename*).
-- Deteksi duplikasi key JSON pada konfigurasi.
-- Urutan laporan deterministik: baris Excel, posisi kolom, lalu kode aturan.
+- Validation of one sheet per CLI invocation.
+- Comprehensive header structure checks: sheet existence, missing headers, duplicate headers, and formulas in headers.
+- Data type checks: `string`, `integer`, `number`, `date`, and `boolean`.
+- Validation of formula cells and Excel error cells in data rows.
+- Handling of numeric precision and leading zeros in strings, such as the code `00123`.
+- Three report formats: terminal text, JSON, and CSV (with formula injection protection).
+- Atomic report file writes using a safe temporary-file rename.
+- Duplicate JSON key detection in configuration files.
+- Deterministic report ordering: Excel row, column position, then rule code.
 
-### Ide Pengembangan Masa Depan (Di Luar MVP)
+### Future Development Ideas (Outside the MVP)
 
-Fitur-fitur berikut sengaja ditunda dan dapat diimplementasikan di versi berikutnya:
-- Konfigurasi multi-sheet dalam satu file dan satu eksekusi.
-- Lookup validasi langsung ke database eksternal.
-- Validasi ketergantungan antar kolom (*cross-column conditional rules*).
-- Evaluasi formula dinamis (*formula calculation engine*).
-- Perbaikan data otomatis (*automatic file repair/sanitization*).
-- Sistem plugin dinamis.
-- Antarmuka grafis (GUI) atau Web UI.
+The following features have been intentionally deferred and may be implemented in future versions:
+
+- Multi-sheet configuration in a single file and execution.
+- Validation lookups against external databases.
+- Cross-column conditional validation rules.
+- Dynamic formula evaluation through a formula calculation engine.
+- Automatic data repair or file sanitization.
+- A dynamic plugin system.
+- A graphical user interface (GUI) or web UI.
